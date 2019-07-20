@@ -1,0 +1,749 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "apimName": {
+            "type": "String"
+        },
+        "apimPublisherName": {
+            "type": "String"
+        },
+        "apimPublisherEmail": {
+            "type": "String"
+        }  
+    },
+    "variables": {},
+    "resources": [
+        {
+            "type": "Microsoft.ApiManagement/service",
+            "apiVersion": "2019-01-01",
+            "name": "[parameters('apimName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Consumption",
+                "capacity": 0
+            },
+            "identity": {
+                "type": "SystemAssigned"
+            },
+            "properties": {
+                "publisherEmail": "[parameters('apimPublisherEmail')]",
+                "publisherName": "[parameters('apimPublisherName')]",
+                "notificationSenderEmail": "apimgmt-noreply@mail.windowsazure.com",
+                "hostnameConfigurations": [
+                    {
+                        "type": "Proxy",
+                        "hostName": "[concat(parameters('apimName'), '.azure-api.net')]",
+                        "negotiateClientCertificate": false,
+                        "defaultSslBinding": true
+                    }
+                ],
+                "customProperties": {
+                    "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10": "False",
+                    "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11": "False",
+                    "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls10": "False",
+                    "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Tls11": "False",
+                    "Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Backend.Protocols.Ssl30": "False",
+                    "Microsoft.WindowsAzure.ApiManagement.Gateway.Protocols.Server.Http2": "False"
+                },
+                "virtualNetworkType": "None",
+                "enableClientCertificate": false
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Azure Data Lake Gen2 Connector",
+                "apiRevision": "1",
+                "subscriptionRequired": true,
+                "serviceUrl": "https://toonvanhoutte.wordpress.com/",
+                "path": "adl",
+                "protocols": [
+                    "https"
+                ],
+                "isCurrent": true,
+                "operations": {     "value": [] }
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/swagger')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Swagger",
+                "apiRevision": "1",
+                "subscriptionRequired": false,
+                "protocols": [
+                    "https"
+                ],
+                "isCurrent": true,
+                "path": "",
+                "operations": {     "value": [] }
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - Only the <forward-request> policy element can appear within the <backend> section element.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy position the cursor at the desired insertion point and click on the round button associated with the policy.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n-->\r\n<policies>\r\n  <inbound></inbound>\r\n  <backend>\r\n    <forward-request />\r\n  </backend>\r\n  <outbound></outbound>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/properties",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/api-version')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "api-version",
+                "value": "2018-11-09",
+                "secret": false
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Create_File')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Create file",
+                "method": "POST",
+                "urlTemplate": "/file",
+                "templateParameters": [],
+                "description": "Creates a file in Azure Data Lake Storage",
+                "request": {
+                    "description": "Provide the content of the file",
+                    "queryParameters": [],
+                    "headers": [
+                        {
+                            "name": "x-adlc-accountName",
+                            "description": "Provide the storage account name of the Azure Data Lake Gen2",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileSystemName",
+                            "description": "Provide the file system name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-folderPath",
+                            "description": "Provide the folder path",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileName",
+                            "description": "Provide the file name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "Content-Type",
+                            "description": "Provide the content type of the file",
+                            "type": "string",
+                            "defaultValue": "application/octet-stream",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "Authorization",
+                            "description": "Provide the APIM subscription key - preferably as a secure parameter",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        }
+                    ],
+                    "representations": [
+                        {
+                            "contentType": "application/json",
+                            "schemaId": "5d33040d0e1f5e0f9ce47b5f",
+                            "typeName": "FileContent"
+                        }
+                    ]
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "OK",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5d33040d0e1f5e0f9ce47b5f",
+                                "typeName": "FileResponse"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Create_File_System')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Create file system",
+                "method": "POST",
+                "urlTemplate": "/filesystem",
+                "templateParameters": [],
+                "description": "Creates a file system in Azure Data Lake Storage",
+                "request": {
+                    "queryParameters": [],
+                    "headers": [
+                        {
+                            "name": "x-adlc-accountName",
+                            "description": "Provide the storage account name of the Azure Data Lake Gen2",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileSystemName",
+                            "description": "Provide the file system name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "Authorization",
+                            "description": "Provide the APIM subscription key - preferably as a secure parameter",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        }
+                    ],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "OK",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5d33040d0e1f5e0f9ce47b5f",
+                                "typeName": "FileSystemResponse"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Create_Folder')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Create folder",
+                "method": "POST",
+                "urlTemplate": "/folder",
+                "templateParameters": [],
+                "description": "Creates a folder in Azure Data Lake Storage",
+                "request": {
+                    "queryParameters": [],
+                    "headers": [
+                        {
+                            "name": "x-adlc-accountName",
+                            "description": "Provide the storage account name of the Azure Data Lake Gen2",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileSystemName",
+                            "description": "Provide the file system name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-folderPath",
+                            "description": "Provide the folder path",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "Authorization",
+                            "description": "Provide the APIM subscription key - preferably as a secure parameter",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        }
+                    ],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "OK",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5d33040d0e1f5e0f9ce47b5f",
+                                "typeName": "FolderResponse"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Delete_File')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Delete file",
+                "method": "DELETE",
+                "urlTemplate": "/file",
+                "templateParameters": [],
+                "description": "Deletes a file in Azure Data Lake Storage",
+                "request": {
+                    "queryParameters": [],
+                    "headers": [
+                        {
+                            "name": "x-adlc-accountName",
+                            "description": "Provide the storage account name of the Azure Data Lake Gen2",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileSystemName",
+                            "description": "Provide the file system name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-folderPath",
+                            "description": "Provide the folder path",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileName",
+                            "description": "Provide the file name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "Authorization",
+                            "description": "Provide the APIM subscription key - preferably as a secure parameter",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        }
+                    ],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "OK",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5d33040d0e1f5e0f9ce47b5f",
+                                "typeName": "FileResponse"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Delete_File_System')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Delete file system",
+                "method": "DELETE",
+                "urlTemplate": "/filesystem",
+                "templateParameters": [],
+                "description": "Deletes a file system in Azure Data Lake Storage",
+                "request": {
+                    "queryParameters": [],
+                    "headers": [
+                        {
+                            "name": "x-adlc-accountName",
+                            "description": "Provide the storage account name of the Azure Data Lake Gen2",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileSystemName",
+                            "description": "Provide the file system name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "Authorization",
+                            "description": "Provide the APIM subscription key - preferably as a secure parameter",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        }
+                    ],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "OK",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5d33040d0e1f5e0f9ce47b5f",
+                                "typeName": "FileSystemResponse"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Delete_Folder')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Delete folder",
+                "method": "DELETE",
+                "urlTemplate": "/folder",
+                "templateParameters": [],
+                "description": "Deletes a folder in Azure Data Lake Storage",
+                "request": {
+                    "queryParameters": [],
+                    "headers": [
+                        {
+                            "name": "x-adlc-accountName",
+                            "description": "Provide the storage account name of the Azure Data Lake Gen2",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileSystemName",
+                            "description": "Provide the file system name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-folderPath",
+                            "description": "Provide the folder path",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "Authorization",
+                            "description": "Provide the APIM subscription key - preferably as a secure parameter",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        }
+                    ],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "OK",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "schemaId": "5d33040d0e1f5e0f9ce47b5f",
+                                "typeName": "FolderResponse"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Get_File')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Get file content",
+                "method": "GET",
+                "urlTemplate": "/file",
+                "templateParameters": [],
+                "description": "Gets the content of a file in Azure Data Lake Storage",
+                "request": {
+                    "queryParameters": [],
+                    "headers": [
+                        {
+                            "name": "x-adlc-accountName",
+                            "description": "Provide the storage account name of the Azure Data Lake Gen2",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileSystemName",
+                            "description": "Provide the file system name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-folderPath",
+                            "description": "Provide the folder path",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "x-adlc-fileName",
+                            "description": "Provide the file name",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        },
+                        {
+                            "name": "Authorization",
+                            "description": "Provide the APIM subscription key - preferably as a secure parameter",
+                            "type": "string",
+                            "required": true,
+                            "values": []
+                        }
+                    ],
+                    "representations": []
+                },
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "OK",
+                        "representations": [],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/swagger/get-swagger')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'swagger')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "displayName": "Get Swagger",
+                "method": "GET",
+                "urlTemplate": "/swagger/docs/v1",
+                "templateParameters": [],
+                "description": "Get Swagger",
+                "responses": [
+                    {
+                        "statusCode": 200,
+                        "description": "Swagger Definition",
+                        "representations": [
+                            {
+                                "contentType": "application/json",
+                                "sample": "{\n    \"swagger\": \"2.0\",\n    \"info\": {\n        \"version\": \"1.0.0\",\n        \"title\": \"Azure Data Lake Gen2 Connector\",\n        \"license\": {\n            \"name\": \"MIT\"\n        }\n    },\n    \"host\": \"adl-ingestion.azure-api.net\",\n    \"basePath\": \"/adl\",\n    \"schemes\": [\n        \"https\"\n    ],\n    \"securityDefinitions\": {\n        \"apiKeyHeader\": {\n            \"type\": \"apiKey\",\n            \"name\": \"Authorization\",\n            \"in\": \"header\"\n        }\n    },\n    \"security\": [{\n        \"apiKeyHeader\": []\n    }],\n    \"paths\": {\n        \"/file\": {\n            \"post\": {\n                \"summary\": \"Create file\",\n                \"description\": \"Creates a file in Azure Data Lake Storage\",\n                \"operationId\": \"Create_File\",\n                \"produces\" : [\n                    \"application/json\"\n                ],\n                \"parameters\": [\n                    {\n                        \"x-ms-summary\" : \"Account name\",\n                        \"name\": \"x-adlc-accountName\", \n                        \"in\": \"header\",\n                        \"description\": \"Provide the storage account name of the Azure Data Lake Gen2\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File system name\",\n                        \"name\": \"x-adlc-fileSystemName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file system name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"Folder path\",\n                        \"name\": \"x-adlc-folderPath\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the folder path\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File name\",\n                        \"name\": \"x-adlc-fileName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File content\",\n                        \"name\" : \"fileContent\",\n                        \"in\" : \"body\",\n                        \"description\" : \"Provide the content of the file\",\n                        \"required\": true,\n                        \"schema\": {\n                            \"type\" : \"string\"\n                        }\n                    },\n                    {\n                        \"x-ms-summary\" : \"Content type\",\n                        \"x-ms-visibility\": \"advanced\",\n                        \"name\": \"Content-Type\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the content type of the file\",\n                        \"required\": true,\n                        \"default\": \"application/octet-stream\",\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"APIM subscription key\",\n                        \"x-ms-visibility\": \"advanced\",\n                        \"name\": \"Authorization\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the APIM subscription key - preferably as a secure parameter\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    }\n                ],\n                \"responses\": {\n                    \"200\": {\n                        \"description\": \"OK\",\n                        \"schema\": {\n                            \"$ref\": \"#/definitions/FileResponse\"\n                        }\n                    }\n                }\n            },\n            \"get\": {\n                \"summary\": \"Get file content\",\n                \"description\": \"Gets the content of a file in Azure Data Lake Storage\",\n                \"operationId\": \"Get_File\",\n                \"parameters\": [\n                    {\n                        \"x-ms-summary\" : \"Account name\",\n                        \"name\": \"x-adlc-accountName\", \n                        \"in\": \"header\",\n                        \"description\": \"Provide the storage account name of the Azure Data Lake Gen2\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File system name\",\n                        \"name\": \"x-adlc-fileSystemName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file system name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"Folder path\",\n                        \"name\": \"x-adlc-folderPath\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the folder path\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File name\",\n                        \"name\": \"x-adlc-fileName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"APIM subscription key\",\n                        \"x-ms-visibility\": \"advanced\",\n                        \"name\": \"Authorization\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the APIM subscription key - preferably as a secure parameter\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    }\n                ],\n                \"responses\": {\n                    \"200\": {\n                        \"description\": \"OK\",\n                        \"schema\": {\n                            \"type\" : \"string\",\n                            \"format\" : \"byte\"\n                        }\n                    }\n                }\n            },\n            \"delete\" :  {\n                \"summary\": \"Delete file\",\n                \"description\": \"Deletes a file in Azure Data Lake Storage\",\n                \"operationId\": \"Delete_File\",\n                \"produces\" : [\n                    \"application/json\"\n                ],\n                \"parameters\": [\n                    {\n                        \"x-ms-summary\" : \"Account name\",\n                        \"name\": \"x-adlc-accountName\", \n                        \"in\": \"header\",\n                        \"description\": \"Provide the storage account name of the Azure Data Lake Gen2\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File system name\",\n                        \"name\": \"x-adlc-fileSystemName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file system name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"Folder path\",\n                        \"name\": \"x-adlc-folderPath\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the folder path\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File name\",\n                        \"name\": \"x-adlc-fileName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"APIM subscription key\",\n                        \"x-ms-visibility\": \"advanced\",\n                        \"name\": \"Authorization\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the APIM subscription key - preferably as a secure parameter\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    }\n                ],\n                \"responses\": {\n                    \"200\": {\n                        \"description\": \"OK\",\n                        \"schema\": {\n                            \"$ref\": \"#/definitions/FileResponse\"\n                        }\n                    }\n                }\n            }\n        },\n        \"/folder\": {\n            \"post\": {\n                \"summary\": \"Create folder\",\n                \"description\": \"Creates a folder in Azure Data Lake Storage\",\n                \"operationId\": \"Create_Folder\",\n                \"produces\" : [\n                    \"application/json\"\n                ],\n                \"parameters\": [\n                    {\n                        \"x-ms-summary\" : \"Account name\",\n                        \"name\": \"x-adlc-accountName\", \n                        \"in\": \"header\",\n                        \"description\": \"Provide the storage account name of the Azure Data Lake Gen2\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File system name\",\n                        \"name\": \"x-adlc-fileSystemName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file system name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"Folder path\",\n                        \"name\": \"x-adlc-folderPath\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the folder path\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"APIM subscription key\",\n                        \"x-ms-visibility\": \"advanced\",\n                        \"name\": \"Authorization\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the APIM subscription key - preferably as a secure parameter\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    }\n                ],\n                \"responses\": {\n                    \"200\": {\n                        \"description\": \"OK\",\n                        \"schema\": {\n                            \"$ref\": \"#/definitions/FolderResponse\"\n                        }\n                    }\n                }\n            },\n            \"delete\": {\n                \"summary\": \"Delete folder\",\n                \"description\": \"Deletes a folder in Azure Data Lake Storage\",\n                \"operationId\": \"Delete_Folder\",\n                \"produces\" : [\n                    \"application/json\"\n                ],\n                \"parameters\": [\n                    {\n                        \"x-ms-summary\" : \"Account name\",\n                        \"name\": \"x-adlc-accountName\", \n                        \"in\": \"header\",\n                        \"description\": \"Provide the storage account name of the Azure Data Lake Gen2\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File system name\",\n                        \"name\": \"x-adlc-fileSystemName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file system name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"Folder path\",\n                        \"name\": \"x-adlc-folderPath\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the folder path\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"APIM subscription key\",\n                        \"x-ms-visibility\": \"advanced\",\n                        \"name\": \"Authorization\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the APIM subscription key - preferably as a secure parameter\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    }\n                ],\n                \"responses\": {\n                    \"200\": {\n                        \"description\": \"OK\",\n                        \"schema\": {\n                            \"$ref\": \"#/definitions/FolderResponse\"\n                        }\n                    }\n                }\n            }\n        },\n        \"/filesystem\": {\n            \"post\": {\n                \"summary\": \"Create file system\",\n                \"description\": \"Creates a file system in Azure Data Lake Storage\",\n                \"operationId\": \"Create_File_System\",\n                \"produces\" : [\n                    \"application/json\"\n                ],\n                \"parameters\": [\n                    {\n                        \"x-ms-summary\" : \"Account name\",\n                        \"name\": \"x-adlc-accountName\", \n                        \"in\": \"header\",\n                        \"description\": \"Provide the storage account name of the Azure Data Lake Gen2\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File system name\",\n                        \"name\": \"x-adlc-fileSystemName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file system name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"APIM subscription key\",\n                        \"x-ms-visibility\": \"advanced\",\n                        \"name\": \"Authorization\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the APIM subscription key - preferably as a secure parameter\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    }\n                ],\n                \"responses\": {\n                    \"200\": {\n                        \"description\": \"OK\",\n                        \"schema\": {\n                            \"$ref\": \"#/definitions/FileSystemResponse\"\n                        }\n                    }\n                }\n            },\n            \"delete\": {\n                \"summary\": \"Delete file system\",\n                \"description\": \"Deletes a file system in Azure Data Lake Storage\",\n                \"operationId\": \"Delete_File_System\",\n                \"produces\" : [\n                    \"application/json\"\n                ],\n                \"parameters\": [\n                    {\n                        \"x-ms-summary\" : \"Account name\",\n                        \"name\": \"x-adlc-accountName\", \n                        \"in\": \"header\",\n                        \"description\": \"Provide the storage account name of the Azure Data Lake Gen2\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"File system name\",\n                        \"name\": \"x-adlc-fileSystemName\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the file system name\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    },\n                    {\n                        \"x-ms-summary\" : \"APIM subscription key\",\n                        \"x-ms-visibility\": \"advanced\",\n                        \"name\": \"Authorization\",\n                        \"in\": \"header\",\n                        \"description\": \"Provide the APIM subscription key - preferably as a secure parameter\",\n                        \"required\": true,\n                        \"type\": \"string\"\n                    }\n                ],\n                \"responses\": {\n                    \"200\": {\n                        \"description\": \"OK\",\n                        \"schema\": {\n                            \"$ref\": \"#/definitions/FileSystemResponse\"\n                        }\n                    }\n                }\n            }\n        }\n    },\n    \"definitions\": {\n        \"FileResponse\": {\n            \"type\": \"object\",\n            \"properties\": {\n                \"accountName\": {\n                    \"description\": \"Storage account name of the Azure Data Lake Gen2\",\n                    \"type\": \"string\",\n                    \"x-ms-summary\": \"Account name\"\n                },\n                \"fileSystemName\": {\n                    \"description\": \"Name of the file system\",\n                    \"type\": \"string\",\n                    \"x-ms-summary\": \"File system name\"\n                },\n                \"folderPath\": {\n                    \"description\": \"Path of the folder\",\n                    \"type\": \"string\",\n                    \"x-ms-summary\": \"Folder path\"\n                },\n                \"fileName\": {\n                    \"description\": \"Name of the file\",\n                    \"type\": \"string\",\n                    \"x-ms-summary\": \"File name\"\n                }\n            }\n        },\n        \"FolderResponse\": {\n            \"type\": \"object\",\n            \"properties\": {\n                \"accountName\": {\n                    \"description\": \"Storage account name of the Azure Data Lake Gen2\",\n                    \"type\": \"string\",\n                    \"x-ms-summary\": \"Account name\"\n                },\n                \"fileSystemName\": {\n                    \"description\": \"Name of the file system\",\n                    \"type\": \"string\",\n                    \"x-ms-summary\": \"File system name\"\n                },\n                \"folderPath\": {\n                    \"description\": \"Path of the folder\",\n                    \"type\": \"string\",\n                    \"x-ms-summary\": \"Folder path\"\n                }\n            }\n        },\n        \"FileSystemResponse\": {\n            \"type\": \"object\",\n            \"properties\": {\n                \"accountName\": {\n                    \"description\": \"Storage account name of the Azure Data Lake Gen2\",\n                    \"type\": \"string\",\n                    \"x-ms-summary\": \"Account name\"\n                },\n                \"fileSystemName\": {\n                    \"description\": \"Name of the file system\",\n                    \"type\": \"string\",\n                    \"x-ms-summary\": \"File system name\"\n                }\n            }\n        }\n    }\n}"
+                            }
+                        ],
+                        "headers": []
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <base />\r\n    <!--Read HTTPS headers-->\r\n    <set-variable name=\"accountName\" value=\"@(context.Request.Headers.GetValueOrDefault(&quot;x-adlc-accountName&quot;))\" />\r\n    <set-variable name=\"fileSystemName\" value=\"@(context.Request.Headers.GetValueOrDefault(&quot;x-adlc-fileSystemName&quot;))\" />\r\n    <set-variable name=\"folderPath\" value=\"@(context.Request.Headers.GetValueOrDefault(&quot;x-adlc-folderPath&quot;))\" />\r\n    <set-variable name=\"fileName\" value=\"@(context.Request.Headers.GetValueOrDefault(&quot;x-adlc-fileName&quot;))\" />\r\n    <!--Compose full path-->\r\n    <set-variable name=\"fullPath\" value=\"@(((string)context.Variables[&quot;fileSystemName&quot;] + &quot;/&quot; + (string)context.Variables[&quot;folderPath&quot;] + &quot;/&quot; + (string)context.Variables[&quot;fileName&quot;]).Replace(&quot;//&quot;,&quot;/&quot;).TrimEnd('/'))\" />\r\n    <!--Compose backend url-->\r\n    <set-variable name=\"backendUrl\" value=\"@(&quot;https://&quot; + (string)context.Variables[&quot;accountName&quot;] + &quot;.dfs.core.windows.net/&quot;)\" />\r\n    <!--Dynamically set backend URL-->\r\n    <set-backend-service base-url=\"@((string)context.Variables[&quot;backendUrl&quot;])\" />\r\n    <!--Set backend AD bearer token-->\r\n    <authentication-managed-identity resource=\"https://storage.azure.com/\" output-token-variable-name=\"msiToken\" ignore-error=\"false\" />\r\n    <set-variable name=\"adBearerToken\" value=\"@(&quot;Bearer &quot; + (string)context.Variables[&quot;msiToken&quot;])\" />\r\n    <set-header name=\"Authorization\" exists-action=\"override\">\r\n      <value>@((string)context.Variables[\"adBearerToken\"])</value>\r\n    </set-header>\r\n    <!--Set backend API version-->\r\n    <set-header name=\"x-ms-version\" exists-action=\"override\">\r\n      <value>{{api-version}}</value>\r\n    </set-header>\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/schemas",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/5d33040d0e1f5e0f9ce47b5f')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "contentType": "application/vnd.ms-azure-apim.swagger.definitions+json",
+                "document": {}
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Create_File/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimName'), 'adl-gen2-connector', 'Create_File')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <base />\r\n    <!--Create file-->\r\n    <send-request response-variable-name=\"createFileResponse\" ignore-error=\"false\">\r\n      <set-url>@((string)context.Variables[\"backendUrl\"] + (string)context.Variables[\"fullPath\"] + \"?resource=file\")</set-url>\r\n      <set-method>PUT</set-method>\r\n      <set-header name=\"x-ms-version\" exists-action=\"override\">\r\n        <value>{{api-version}}</value>\r\n      </set-header>\r\n      <set-header name=\"Authorization\" exists-action=\"override\">\r\n        <value>@((string)context.Variables[\"adBearerToken\"])</value>\r\n      </set-header>\r\n    </send-request>\r\n    <!--Upload file content-->\r\n    <set-method>PATCH</set-method>\r\n    <rewrite-uri template=\"@((string)context.Variables[&quot;fullPath&quot;] + &quot;?action=append&amp;amp;position=0&quot;)\" copy-unmatched-params=\"false\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n    <!--Flush file content-->\r\n    <send-request response-variable-name=\"flushFileResponse\" ignore-error=\"false\">\r\n      <set-url>@((string)context.Variables[\"backendUrl\"] + (string)context.Variables[\"fullPath\"] + \"?action=flush&amp;amp;position=\" + (string)context.Request.Headers.GetValueOrDefault(\"Content-Length\"))</set-url>\r\n      <set-method>PATCH</set-method>\r\n      <set-header name=\"x-ms-version\" exists-action=\"override\">\r\n        <value>{{api-version}}</value>\r\n      </set-header>\r\n      <set-header name=\"Authorization\" exists-action=\"override\">\r\n        <value>@((string)context.Variables[\"adBearerToken\"])</value>\r\n      </set-header>\r\n    </send-request>\r\n    <!--Return response-->\r\n    <return-response>\r\n      <set-header name=\"Content-Type\" exists-action=\"override\">\r\n        <value>application/json</value>\r\n      </set-header>\r\n      <set-body template=\"liquid\">\r\n{\r\n\t\"accountName\" : \"{{context.Variables[\"accountName\"]}}\",\r\n\t\"fileSystemName\" : \"{{context.Variables[\"fileSystemName\"]}}\",\r\n\t\"folderPath\" : \"{{context.Variables[\"folderPath\"]}}\",\r\n\t\"fileName\" : \"{{context.Variables[\"fileName\"]}}\"\r\n}\t\r\n\t\t\t</set-body>\r\n    </return-response>\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Create_File_System/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimName'), 'adl-gen2-connector', 'Create_File_System')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <base />\r\n    <!--Create file system-->\r\n    <set-method>PUT</set-method>\r\n    <rewrite-uri template=\"@((string)context.Variables[&quot;fileSystemName&quot;] + &quot;?resource=filesystem&quot;)\" copy-unmatched-params=\"false\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n    <!--Return response-->\r\n    <return-response>\r\n      <set-header name=\"Content-Type\" exists-action=\"override\">\r\n        <value>application/json</value>\r\n      </set-header>\r\n      <set-body template=\"liquid\">\r\n{\r\n\t\"accountName\" : \"{{context.Variables[\"accountName\"]}}\",\r\n\t\"fileSystemName\" : \"{{context.Variables[\"fileSystemName\"]}}\"\r\n}\t\r\n\t\t\t</set-body>\r\n    </return-response>\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Create_Folder/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimName'), 'adl-gen2-connector', 'Create_Folder')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <base />\r\n    <!--Upload file content-->\r\n    <set-method>PUT</set-method>\r\n    <rewrite-uri template=\"@((string)context.Variables[&quot;fullPath&quot;] + &quot;?resource=folder&quot;)\" copy-unmatched-params=\"false\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n    <!--Return response-->\r\n    <return-response>\r\n      <set-header name=\"Content-Type\" exists-action=\"override\">\r\n        <value>application/json</value>\r\n      </set-header>\r\n      <set-body template=\"liquid\">\r\n{\r\n\t\"accountName\" : \"{{context.Variables[\"accountName\"]}}\",\r\n\t\"fileSystemName\" : \"{{context.Variables[\"fileSystemName\"]}}\",\r\n\t\"folderPath\" : \"{{context.Variables[\"folderPath\"]}}\"\r\n}\t\r\n\t\t\t</set-body>\r\n    </return-response>\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Delete_File/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimName'), 'adl-gen2-connector', 'Delete_File')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <base />\r\n    <!--Delete file-->\r\n    <set-method>DELETE</set-method>\r\n    <rewrite-uri template=\"@((string)context.Variables[&quot;fullPath&quot;])\" copy-unmatched-params=\"false\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n    <!--Return response-->\r\n    <return-response>\r\n      <set-header name=\"Content-Type\" exists-action=\"override\">\r\n        <value>application/json</value>\r\n      </set-header>\r\n      <set-body template=\"liquid\">\r\n{\r\n\t\"accountName\" : \"{{context.Variables[\"accountName\"]}}\",\r\n\t\"fileSystemName\" : \"{{context.Variables[\"fileSystemName\"]}}\",\r\n\t\"folderPath\" : \"{{context.Variables[\"folderPath\"]}}\",\r\n\t\"fileName\" : \"{{context.Variables[\"fileName\"]}}\"\r\n}\t\r\n\t\t\t</set-body>\r\n    </return-response>\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Delete_File_System/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimName'), 'adl-gen2-connector', 'Delete_File_System')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <base />\r\n    <!--Delete file system-->\r\n    <set-method>DELETE</set-method>\r\n    <rewrite-uri template=\"@((string)context.Variables[&quot;fileSystemName&quot;] + &quot;?resource=filesystem&quot;)\" copy-unmatched-params=\"false\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n    <!--Return response-->\r\n    <return-response>\r\n      <set-header name=\"Content-Type\" exists-action=\"override\">\r\n        <value>application/json</value>\r\n      </set-header>\r\n      <set-body template=\"liquid\">\r\n{\r\n\t\"accountName\" : \"{{context.Variables[\"accountName\"]}}\",\r\n\t\"fileSystemName\" : \"{{context.Variables[\"fileSystemName\"]}}\"\r\n}\t\r\n\t\t\t</set-body>\r\n    </return-response>\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Delete_Folder/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimName'), 'adl-gen2-connector', 'Delete_Folder')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <base />\r\n    <!--Delete folder-->\r\n    <set-method>DELETE</set-method>\r\n    <rewrite-uri template=\"@((string)context.Variables[&quot;fullPath&quot;] + &quot;?recursive=true&quot;)\" copy-unmatched-params=\"false\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n    <!--Return response-->\r\n    <return-response>\r\n      <set-header name=\"Content-Type\" exists-action=\"override\">\r\n        <value>application/json</value>\r\n      </set-header>\r\n      <set-body template=\"liquid\">\r\n{\r\n\t\"accountName\" : \"{{context.Variables[\"accountName\"]}}\",\r\n\t\"fileSystemName\" : \"{{context.Variables[\"fileSystemName\"]}}\",\r\n\t\"folderPath\" : \"{{context.Variables[\"folderPath\"]}}\"\r\n}\t\r\n\t\t\t</set-body>\r\n    </return-response>\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Get_File/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimName'), 'adl-gen2-connector', 'Get_File')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <base />\r\n    <!--Get file-->\r\n    <set-method>GET</set-method>\r\n    <rewrite-uri template=\"@((string)context.Variables[&quot;fullPath&quot;])\" copy-unmatched-params=\"false\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        },
+        {
+            "type": "Microsoft.ApiManagement/service/apis/operations/policies",
+            "apiVersion": "2019-01-01",
+            "name": "[concat(parameters('apimName'), '/swagger/get-swagger/policy')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('apimName'), 'swagger', 'get-swagger')]",
+                "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'swagger')]",
+                "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
+            ],
+            "properties": {
+                "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy, place the cursor at the desired insertion point and select a policy from the sidebar.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Position the <base> element within a section element to inherit all policies from the corresponding section element in the enclosing scope.\r\n    - Remove the <base> element to prevent inheriting policies from the corresponding section element in the enclosing scope.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n    - Comments within policy elements are not supported and may disappear. Place your comments between policy elements or at a higher level scope.\r\n-->\r\n<policies>\r\n  <inbound>\r\n    <base />\r\n    <cors allow-credentials=\"false\">\r\n      <allowed-origins>\r\n        <origin>*</origin>\r\n      </allowed-origins>\r\n      <allowed-methods>\r\n        <method>GET</method>\r\n      </allowed-methods>\r\n      <allowed-headers>\r\n        <header>*</header>\r\n      </allowed-headers>\r\n    </cors>\r\n    <mock-response status-code=\"200\" content-type=\"application/json\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
+                "format": "xml"
+            }
+        }
+    ]
+}
