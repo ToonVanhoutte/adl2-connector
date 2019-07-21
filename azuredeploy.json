@@ -67,6 +67,10 @@
                 "protocols": [
                     "https"
                 ],
+                "subscriptionKeyParameterNames": {
+                    "header": "Authorization",
+                    "query": "@Adv1s3dN0tT°Us3Th1s"
+                  },
                 "isCurrent": true,
                 "operations": {     "value": [] }
             }
