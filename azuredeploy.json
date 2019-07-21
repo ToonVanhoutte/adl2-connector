@@ -12,7 +12,8 @@
             "type": "String"
         }  
     },
-    "variables": {},
+    "variables": {
+    },
     "resources": [
         {
             "type": "Microsoft.ApiManagement/service",
@@ -119,6 +120,7 @@
             "apiVersion": "2019-01-01",
             "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Create_File')]",
             "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apimName'), 'adl-gen2-connector//5d33040d0e1f5e0f9ce47b5f')]",
                 "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
                 "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
             ],
@@ -205,6 +207,7 @@
             "apiVersion": "2019-01-01",
             "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Create_File_System')]",
             "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apimName'), 'adl-gen2-connector//5d33040d0e1f5e0f9ce47b5f')]",
                 "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
                 "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
             ],
@@ -262,6 +265,7 @@
             "apiVersion": "2019-01-01",
             "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Create_Folder')]",
             "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apimName'), 'adl-gen2-connector//5d33040d0e1f5e0f9ce47b5f')]",
                 "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
                 "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
             ],
@@ -326,6 +330,7 @@
             "apiVersion": "2019-01-01",
             "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Delete_File')]",
             "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apimName'), 'adl-gen2-connector//5d33040d0e1f5e0f9ce47b5f')]",
                 "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
                 "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
             ],
@@ -397,6 +402,7 @@
             "apiVersion": "2019-01-01",
             "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Delete_File_System')]",
             "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apimName'), 'adl-gen2-connector//5d33040d0e1f5e0f9ce47b5f')]",
                 "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
                 "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
             ],
@@ -454,6 +460,7 @@
             "apiVersion": "2019-01-01",
             "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Delete_Folder')]",
             "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apimName'), 'adl-gen2-connector//5d33040d0e1f5e0f9ce47b5f')]",
                 "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
                 "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
             ],
@@ -518,6 +525,7 @@
             "apiVersion": "2019-01-01",
             "name": "[concat(parameters('apimName'), '/adl-gen2-connector/Get_File')]",
             "dependsOn": [
+                "[resourceId('Microsoft.ApiManagement/service/apis/schemas', parameters('apimName'), 'adl-gen2-connector//5d33040d0e1f5e0f9ce47b5f')]",
                 "[resourceId('Microsoft.ApiManagement/service/apis', parameters('apimName'), 'adl-gen2-connector')]",
                 "[resourceId('Microsoft.ApiManagement/service', parameters('apimName'))]"
             ],
